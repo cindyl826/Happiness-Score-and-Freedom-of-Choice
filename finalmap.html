@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+  <script src="https://unpkg.com/topojson@3.0.2/dist/topojson.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+  <!-- Add dashboard.css link -->
+  <link rel="stylesheet" href="css/Dashboard.css">
+  <!-- Add base.js line -->
+  <script src="js/base.js"></script>
+  <!-- Add sparkline.js link -->
+  <script src="js/sparkline.js"></script>
+  <!-- sidebar -->
+  <div id="info">
+    <div id="title">
+      Freedom of Choice and Happiness Score by Countries in 2020
+    </div>
+    <div id="tooltip" class="card">
+      <p id="tip-header"></p>
+    </div>
+    <div id="chart-title"><h2>Change of Happiness Score from 2016 to 2020</h2></div>
+    <div id="score-count"></div>
+    <div id="score-chart"></div>
+    <div id="gdp-count"><h2>Change of Freedom of Choice from 2016 to 2020</h2></div>
+    <div id="gdp-chart"></div>
+    <div id="footer">
+      The Happiness Score is a national average of the responses to the main life evaluation question asked in the Gallup World Poll (GWP), which uses the Cantril Ladder.
+      Nationally representative samples of respondents are asked to think of a ladder, with the best possible life for them being a 10, and the worst possible life being a 0. They are then asked to rate their own current lives on that 0 to 10 scale. The report correlates the life evaluation results with various life factors.<br>
+      <br>Created by Cindy Lin<br>Geog458 Final Project<br>12/12/2021
+    </div>
+  </div>
+  <!-- mainwindow -->
+  <div id="map">
+    <h1>Global Happiness Score in 2020</h1>
+  </div>
+  <div id="legend"></div>
+
+  <script>
+  var height = 600;
+  var width = 800;
+  var tipWidth = 200,
+  tipHeight = 200;
+  var mheight = 700;
+  var mwidth = 1000;
+  var projection = d3.geoOrthographic()
+  var wa = void 0;
+  var db = d3.map();
+  var db2 = d3.map();
+
+  // add color scale
+  var colorScale = d3.scaleSequential(d3.interpolateOranges).domain([0, 10]);
+
+  var path = d3.geoPath().projection(projection);
+  var svg = d3.select("#map")
+  .append("svg")
+  .attr("width", mwidth)
+  .attr("height", mheight);
+  Promise.all([d3.json('data/world-110.json'), d3.csv('data/countryScore.csv')])
+  .then(function ready(loadData) {
+    // loading data
+    var world = loadData[0]
+    var data = loadData[1]
+
+    console.log(world);
+    console.log(data);
+
+    var countries = topojson.feature(world, world.objects.ne_110m_admin_0_countries);
+    console.log(countries);
+
+    var scores = d3.nest().key(function(d){return d.country}).map(data);
+    console.log(scores);
+
+    // sorted according to happiness score
+    var sorted = data.slice().sort(function(a,b){return d3.descending(+a.score2020, +b.score2020);})
+    console.log(sorted);
+
+    // sorted country list
+    var countryList = sorted.map(d => d.country);
+    console.log(countryList);
+
+    var scoresbyCountry2020 = new Map(data.map(d => [d.country, + d.score2020]));
+    console.log(scoresbyCountry2020);
+
+    var scoresbyCountry2019 = new Map(data.map(d => [d.country, + d.score2019]));
+    console.log(scoresbyCountry2019);
+
+    var scoresbyCountry2018 = new Map(data.map(d => [d.country, + d.score2018]));
+    console.log(scoresbyCountry2018);
+
+    var scoresbyCountry2017 = new Map(data.map(d => [d.country, + d.score2017]));
+    console.log(scoresbyCountry2017);
+
+    var scoresbyCountry2016 = new Map(data.map(d => [d.country, + d.score2016]));
+    console.log(scoresbyCountry2016);
+
+    var freebyCountry2020 = new Map(data.map(d => [d.country, + d.freedom2020]));
+    console.log(freebyCountry2020);
+
+    var freebyCountry2019 = new Map(data.map(d => [d.country, + d.freedom2019]));
+    console.log(freebyCountry2019);
+
+    var freebyCountry2018 = new Map(data.map(d => [d.country, + d.freedom2018]));
+    console.log(freebyCountry2018);
+
+    var freebyCountry2017 = new Map(data.map(d => [d.country, + d.freedom2017]));
+    console.log(freebyCountry2017);
+
+    var freebyCountry2016= new Map(data.map(d => [d.country, + d.freedom2016]));
+    console.log(freebyCountry2016);
+
+
+    var hover = function(d) {
+      // score chart
+      var div = document.getElementById('score-count');
+         d3.select(this).style('stroke', 'lightSteelBlue')
+                        .style('stroke-width', 3)
+                        .style('stroke-dasharray', ('3 3'))
+      var divChart = document.getElementById('score-chart')
+      chart.datum(db.get(d.properties.admin)).call(sparkline.draw);
+
+      // freedom chart
+      var div2 = document.getElementById('gdp-count');
+         d3.select(this).style('stroke', 'lightSteelBlue')
+                        .style('stroke-width', 3)
+                        .style('stroke-dasharray', ('3 3'))
+      var divChart2 = document.getElementById('gdp-chart')
+      chart2.datum(db2.get(d.properties.admin)).call(sparkline2.draw);
+
+      var div3 = document.getElementById('tooltip')
+      div3.style.left = event.pageX +'px';
+      div3.style.top = event.pageY + 'px';
+      d3.selectAll('path').style('stroke', 'transperent')
+      d3.select(this).style('stroke', 'grey').style('stroke-dasharray', ('3 3'))
+      var divHead = document.getElementById('tip-header')
+      divHead.innerHTML =  '<h2>Selected Country:  '+d.properties.admin +'</h2><h3>Happiness Score: '
+      + scoresbyCountry2020.get(d.properties.admin) +'<br/><br/>Freedom of Choice: '
+      + freebyCountry2020.get(d.properties.admin)+'</h3>'}
+
+    var out = function(d){
+      var div = document.getElementById('score-count')
+        d3.select(this).transition().duration(500)
+            .style('stroke', function(d){return 'transparent'})
+        var divChart = document.getElementById('score-chart')
+        chart.select('svg').remove();
+
+        var div2 = document.getElementById('gdp-count')
+          d3.select(this).transition().duration(500)
+              .style('stroke', function(d){return 'transparent'})
+          var divChart2 = document.getElementById('gdp-chart')
+          chart2.select('svg').remove();
+
+      var div3 = document.getElementById('tooltip')
+                 d3.select(this).transition().duration(500)
+                     .style('stroke', function(d){return 'transparent'});
+                 d3.select('#'+d.properties.admin).attr('fill', function(d){return 'transparent'})
+    }
+
+    var setDb = function(data) {
+          data.forEach(function(d) {
+            db.set(d.properties.admin,[
+               {"x": 2016, "y": + scoresbyCountry2016.get(d.properties.admin)},
+               {"x": 2017, "y": + scoresbyCountry2017.get(d.properties.admin)},
+               {"x": 2018, "y": + scoresbyCountry2018.get(d.properties.admin)},
+               {"x": 2019, "y": + scoresbyCountry2019.get(d.properties.admin)},
+               {"x": 2020, "y": + scoresbyCountry2020.get(d.properties.admin)},
+
+            ]);
+          });
+        };
+   setDb(countries.features);
+   console.log(db);
+
+   var setDb2 = function(data) {
+         data.forEach(function(d) {
+           db2.set(d.properties.admin,[
+              {"x": 2016, "y": + freebyCountry2016.get(d.properties.admin)},
+              {"x": 2017, "y": + freebyCountry2017.get(d.properties.admin)},
+              {"x": 2018, "y": + freebyCountry2018.get(d.properties.admin)},
+              {"x": 2019, "y": + freebyCountry2019.get(d.properties.admin)},
+              {"x": 2020, "y": + freebyCountry2020.get(d.properties.admin)},
+
+           ]);
+         });
+       };
+  setDb2(countries.features);
+  console.log(db2);
+
+
+    // add a legend
+    svg.append("g")
+    .attr("class", "legend")
+    .attr("transform", "translate(500,660)");
+
+    var legendLinear = d3.legendColor()
+    .shapeWidth(80)
+    .orient('horizontal')
+    .scale(colorScale);
+
+    svg.select(".legend")
+    .call(legendLinear);
+
+    svg.selectAll("path")
+    .data(countries.features)
+    .enter()
+    .append("path")
+    .attr("d", path)
+    .attr("class", "country")
+    .style("fill", function (d) {return colorScale(scoresbyCountry2020.get(d.properties.admin));})
+    .style("stroke", '#fff')
+    .on("mouseover", hover)
+    .on("mouseout", out);
+
+    var graticule = d3.geoGraticule();
+    d3.select("svg")
+       .insert("path", "path.country")
+       .datum(graticule)
+       .attr("class", "graticule")
+       .attr("d", path);
+
+    var mapZoom = d3.zoom().on("zoom", zoomed);
+
+    //Orthographic should start out untranslated
+    var zoomSettings = d3.zoomIdentity
+    .translate(0, 0)
+    .scale(250);
+
+    //This scale will be used to transform for x-zoom to degrees
+    var rotateScale = d3.scaleLinear()
+    .domain([-500, 0, 500])
+    .range([-180, 0, 180]);
+
+    d3.select("svg").call(mapZoom).call(mapZoom.transform, zoomSettings);
+
+    // draw the chart
+    var sparkline = d3.charts.sparkline()
+                     .height(260)
+                     .width(310);
+
+  var chartmargin = {top: 10, right: 30, bottom: 30, left: 30},
+  chartwidth = 400 - chartmargin.left - chartmargin.right,
+  chartheight = 300 - chartmargin.top - chartmargin.bottom;
+
+      // create svg element
+    var chart = d3.select("#score-chart")
+        .append("svg")
+        .attr("width", chartwidth + chartmargin.left + chartmargin.right)
+        .attr("height", chartheight + chartmargin.top + chartmargin.bottom)
+        .append("g").attr('class', 'line')
+        .attr("transform","translate(" + chartmargin.left + "," + chartmargin.top + ")");
+
+      // Create the scale
+    var x = d3.scaleLinear()
+          .domain([2016,2020])
+          .range([0, chartwidth]);       // This is where the axis is placed: from 0px to 400px
+    // Draw the axis
+    chart.append("g")
+         .attr("transform", "translate(0," + chartheight + ")")
+         .call(d3.axisBottom(x).ticks(3));
+
+    var sparkline2 = d3.charts.sparkline()
+                          .height(260)
+                          .width(310);
+
+    var chart2 = d3.select("#gdp-chart")
+    .append("svg")
+    .attr("width", chartwidth + chartmargin.left + chartmargin.right)
+    .attr("height", chartheight + chartmargin.top + chartmargin.bottom)
+    .append("g").attr('class', 'line')
+    .attr("transform","translate(" + chartmargin.left + "," + chartmargin.top + ")");
+
+    // Create the scale
+  var x2 = d3.scaleLinear()
+        .domain([2016,2020])
+        .range([0, chartwidth]);       // This is where the axis is placed: from 0px to 400px
+  // Draw the axis
+  chart2.append("g")
+       .attr("transform", "translate(0," + chartheight + ")")
+       .call(d3.axisBottom(x2).ticks(3));
+
+
+    function zoomed() {
+      var e = d3.event;
+      var currentRotateX = rotateScale(e.transform.x) % 360;
+      //make the globe roll around up and down
+      var currentRotateY = rotateScale(e.transform.y) % 360;
+
+      projection.rotate([currentRotateX, currentRotateY])
+      .scale(e.transform.k)
+      d3.selectAll("path.graticule").attr("d", path);
+      d3.selectAll("path.country").attr("d", path)
+      .style("fill", function (d) {return colorScale(scoresbyCountry2020.get(d.properties.admin));})
+      .style("stroke", '#fff')
+      .on("mouseover", hover)
+      .on("mouseout", out);
+
+    }
+  });
+  </script>
+
+</body>
+</html>
