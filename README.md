@@ -6,6 +6,5 @@ The target audience could be the general public, government and medical professi
 ## Design Overview
 The data is displayed through a smart dashboard. The side bar will show the title data for 2020 when users hover over any country on the map on the right side of the Dashboard. The two charts on the side bar will also change as users hover over different countries to show specifically the data changed for that country. The right side of the dash board is a choropleth map with a legend and geoOrthographic projection. The map would have zoom, rotate and hover over features and with graticule, so it’s easier for the audience to look at.
 ## Data
-Source: Sustainable Development Solutions Network
-https://www.kaggle.com/unsdsn/world-happiness
+Source: [Sustainable Development Solutions Network](https://www.kaggle.com/unsdsn/world-happiness)<br/>
 The data that I used to create the choropleth map was the world-110.json TopoJSON file. The happiness score and freedom of choice data was pulled from Kaggle, created by Sustainable Development Solutions Network. For each year from 2015 to 2020, they have a csv containing data with a happiness score for each country and several variables that might have impacted the happiness score for that year. In this project, I am only exploring the correlation between happiness score and freedom to make life choices, so I pulled out the values for these two variables from 2016 to 2020 and created a new csv file.
